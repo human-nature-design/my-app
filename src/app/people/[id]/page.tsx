@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { DefaultPageLayout } from "@/ui/layouts/DefaultPageLayout";
 import { Button } from "@/ui/components/Button";
 import { IconButton } from "@/ui/components/IconButton";
@@ -12,6 +12,7 @@ import { Select } from "@/ui/components/Select";
 
 export default function PersonDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [person, setPerson] = useState<PersonWithId | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -19,6 +20,18 @@ export default function PersonDetailPage({ params }: { params: { id: string } })
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);
+
+  // Check if user came from a company page
+  const fromCompany = searchParams.get('from') === 'company';
+  const companyId = searchParams.get('companyId');
+
+  const handleBackNavigation = () => {
+    if (fromCompany && companyId) {
+      router.push(`/companies/${companyId}`);
+    } else {
+      router.push('/people');
+    }
+  };
 
   useEffect(() => {
     fetchPerson();
@@ -91,7 +104,7 @@ export default function PersonDetailPage({ params }: { params: { id: string } })
 
       if (!response.ok) throw new Error('Failed to delete person');
       
-      router.push('/people');
+      handleBackNavigation();
     } catch (error) {
       console.error('Error deleting person:', error);
       setDeleting(false);
@@ -113,8 +126,8 @@ export default function PersonDetailPage({ params }: { params: { id: string } })
       <DefaultPageLayout>
         <div className="container max-w-none flex h-full w-full flex-col items-center justify-center gap-4">
           <span className="text-body font-body text-neutral-500">Person not found</span>
-          <Button onClick={() => router.push('/people')}>
-            Back to People
+          <Button onClick={handleBackNavigation}>
+            Back to {fromCompany ? 'Company' : 'People'}
           </Button>
         </div>
       </DefaultPageLayout>
@@ -128,7 +141,7 @@ export default function PersonDetailPage({ params }: { params: { id: string } })
           <div className="flex items-center gap-4">
             <IconButton
               icon="FeatherArrowLeft"
-              onClick={() => router.push('/people')}
+              onClick={handleBackNavigation}
             />
             <h1 className="text-heading-2 font-heading-2 text-neutral-900">{person.name}</h1>
           </div>

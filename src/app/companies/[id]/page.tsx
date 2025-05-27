@@ -319,7 +319,7 @@ function CompanyDetail() {
                   <Table.Row key={person.id} clickable>
                     <Table.Cell>
                       <button
-                        onClick={() => router.push(`/people/${person.id}`)}
+                        onClick={() => router.push(`/people/${person.id}?from=company&companyId=${params.id}`)}
                         className="whitespace-nowrap text-body-bold font-body-bold text-brand-700 hover:underline text-left"
                       >
                         {person.name}
