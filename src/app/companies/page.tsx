@@ -31,10 +31,31 @@ function Companies() {
 
   const fetchCompanies = async () => {
     try {
-      const response = await fetch('/api/companies');
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error('Missing Supabase environment variables');
+      }
+
+      const response = await fetch(`${supabaseUrl}/rest/v1/Companies?order=name.asc`, {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
       if (!response.ok) throw new Error('Failed to fetch companies');
       const data = await response.json();
-      setCompanies(data || []);
+      
+      // Add peopleCount as 0 for now (we can add this back later)
+      const companiesWithCount = data?.map((company: any) => ({
+        ...company,
+        peopleCount: 0
+      })) || [];
+      
+      setCompanies(companiesWithCount);
     } catch (error) {
       console.error('Error fetching companies:', error);
     } finally {
@@ -46,18 +67,38 @@ function Companies() {
     try {
       console.log('Creating company:', newCompany);
       
-      const response = await fetch('/api/companies', {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error('Missing Supabase environment variables');
+      }
+
+      // Prepare the data to match your successful Postman test
+      const companyData = {
+        name: newCompany.name,
+        website: newCompany.website || null,
+        headquarters: newCompany.headquarters || null,
+        status: newCompany.status || 'Active'
+      };
+
+      const response = await fetch(`${supabaseUrl}/rest/v1/Companies`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newCompany),
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(companyData),
       });
 
       console.log('Response status:', response.status);
       
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.text();
         console.error('Server error:', errorData);
-        throw new Error(errorData.error || 'Failed to create company');
+        throw new Error(`Failed to create company: ${response.status} ${response.statusText}`);
       }
       
       const createdCompany = await response.json();
@@ -77,8 +118,20 @@ function Companies() {
     
     setDeleting(true);
     try {
-      const response = await fetch(`/api/companies/${deleteDialog.company.id}`, {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error('Missing Supabase environment variables');
+      }
+
+      const response = await fetch(`${supabaseUrl}/rest/v1/Companies?id=eq.${deleteDialog.company.id}`, {
         method: 'DELETE',
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (!response.ok) throw new Error('Failed to delete company');

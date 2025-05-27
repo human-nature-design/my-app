@@ -18,7 +18,8 @@ export function CompanyModal({ isOpen, onClose, onSave, company, mode }: Company
   const [formData, setFormData] = useState<Company>({
     name: '',
     website: '',
-    headquarters: ''
+    headquarters: '',
+    status: 'Active'
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -30,13 +31,15 @@ export function CompanyModal({ isOpen, onClose, onSave, company, mode }: Company
         id: company.id,
         name: company.name,
         website: company.website || '',
-        headquarters: company.headquarters || ''
+        headquarters: company.headquarters || '',
+        status: company.status || 'Active'
       });
     } else {
       setFormData({
         name: '',
         website: '',
-        headquarters: ''
+        headquarters: '',
+        status: 'Active'
       });
     }
     setErrors({});
@@ -107,7 +110,8 @@ export function CompanyModal({ isOpen, onClose, onSave, company, mode }: Company
           : undefined,
         headquarters: formData.headquarters && formData.headquarters.trim() 
           ? formData.headquarters.trim()
-          : undefined
+          : undefined,
+        status: formData.status || 'Active'
       };
       
       console.log('Submitting company data:', processedData);
