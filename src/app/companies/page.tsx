@@ -49,13 +49,7 @@ function Companies() {
       if (!response.ok) throw new Error('Failed to fetch companies');
       const data = await response.json();
       
-      // Add peopleCount as 0 for now (we can add this back later)
-      const companiesWithCount = data?.map((company: any) => ({
-        ...company,
-        peopleCount: 0
-      })) || [];
-      
-      setCompanies(companiesWithCount);
+      setCompanies(data || []);
     } catch (error) {
       console.error('Error fetching companies:', error);
     } finally {
@@ -165,20 +159,19 @@ function Companies() {
               <Table.HeaderCell>Website</Table.HeaderCell>
               <Table.HeaderCell>Headquarters</Table.HeaderCell>
               <Table.HeaderCell>Status</Table.HeaderCell>
-              <Table.HeaderCell>People Count</Table.HeaderCell>
               <Table.HeaderCell></Table.HeaderCell>
             </Table.HeaderRow>
           }
         >
           {loading ? (
             <Table.Row>
-              <Table.Cell colSpan={6}>
+              <Table.Cell colSpan={5}>
                 <span className="text-body font-body text-neutral-500">Loading...</span>
               </Table.Cell>
             </Table.Row>
           ) : companies.length === 0 ? (
             <Table.Row>
-              <Table.Cell colSpan={6}>
+              <Table.Cell colSpan={5}>
                 <span className="text-body font-body text-neutral-500">No companies found</span>
               </Table.Cell>
             </Table.Row>
@@ -210,11 +203,6 @@ function Companies() {
                       : 'bg-gray-100 text-gray-800'
                   }`}>
                     {company.status || 'Active'}
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    {company.peopleCount || 0}
                   </span>
                 </Table.Cell>
                 <Table.Cell>

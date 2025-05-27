@@ -4,15 +4,21 @@ import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { DefaultPageLayout } from "@/ui/layouts/DefaultPageLayout";
 import { Button } from "@/ui/components/Button";
-import { CompanyModal } from "@/components/CompanyModal";
+import { IconButton } from "@/ui/components/IconButton";
 import { Company, CompanyWithId } from "@/types/company";
+import { Dialog } from "@/ui/components/Dialog";
+import { TextField } from "@/ui/components/TextField";
+import { Select } from "@/ui/components/Select";
 
 function CompanyDetail() {
   const router = useRouter();
   const params = useParams();
   const [company, setCompany] = useState<CompanyWithId | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedCompany, setEditedCompany] = useState<Company | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -32,6 +38,7 @@ function CompanyDetail() {
       }
       const data = await response.json();
       setCompany(data);
+      setEditedCompany(data);
     } catch (error) {
       console.error('Error fetching company:', error);
       router.push('/companies');
@@ -40,28 +47,53 @@ function CompanyDetail() {
     }
   };
 
-  const handleEdit = async (updatedCompany: Company) => {
+  const handleUpdate = async () => {
+    if (!editedCompany) return;
+    
     try {
       const response = await fetch(`/api/companies/${params.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedCompany),
+        body: JSON.stringify(editedCompany),
       });
 
       if (!response.ok) throw new Error('Failed to update company');
       
-      await fetchCompany();
-      setIsEditModalOpen(false);
+      const data = await response.json();
+      setCompany(data);
+      setEditedCompany(data);
+      setIsEditing(false);
     } catch (error) {
       console.error('Error updating company:', error);
       throw error;
     }
   };
 
+  const handleCancel = () => {
+    setEditedCompany(company);
+    setIsEditing(false);
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/companies/${params.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete company');
+      
+      router.push('/companies');
+    } catch (error) {
+      console.error('Error deleting company:', error);
+      setDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <DefaultPageLayout>
-        <div className="container max-w-none flex h-full w-full flex-col items-start gap-4 bg-default-background py-12">
+        <div className="container max-w-none flex h-full w-full items-center justify-center">
           <span className="text-body font-body text-neutral-500">Loading...</span>
         </div>
       </DefaultPageLayout>
@@ -71,8 +103,11 @@ function CompanyDetail() {
   if (!company) {
     return (
       <DefaultPageLayout>
-        <div className="container max-w-none flex h-full w-full flex-col items-start gap-4 bg-default-background py-12">
+        <div className="container max-w-none flex h-full w-full flex-col items-center justify-center gap-4">
           <span className="text-body font-body text-neutral-500">Company not found</span>
+          <Button onClick={() => router.push('/companies')}>
+            Back to Companies
+          </Button>
         </div>
       </DefaultPageLayout>
     );
@@ -83,82 +118,150 @@ function CompanyDetail() {
       <div className="container max-w-none flex h-full w-full flex-col items-start gap-6 bg-default-background py-12">
         <div className="flex w-full items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button
-              variant="neutral-secondary"
+            <IconButton
+              icon="FeatherArrowLeft"
               onClick={() => router.push('/companies')}
-            >
-              ← Back to Companies
-            </Button>
-            <h1 className="text-heading-2 font-heading-2">{company.name}</h1>
+            />
+            <h1 className="text-heading-2 font-heading-2 text-neutral-900">{company.name}</h1>
           </div>
-          <Button onClick={() => setIsEditModalOpen(true)}>
-            Edit Company
-          </Button>
+          <div className="flex items-center gap-2">
+            {isEditing ? (
+              <>
+                <Button
+                  variant="neutral-secondary"
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleUpdate}
+                >
+                  Save
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="neutral-secondary"
+                  icon="FeatherEdit2"
+                  onClick={() => setIsEditing(true)}
+                >
+                  Edit
+                </Button>
+                <Button
+                  variant="destructive-secondary"
+                  icon="FeatherTrash"
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                >
+                  Delete
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="w-full max-w-2xl">
-          <div className="bg-white rounded-lg border border-neutral-border p-6">
-            <h2 className="text-heading-3 font-heading-3 mb-4">Company Details</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-default-background rounded-lg shadow-sm border border-neutral-200 p-6">
+            <div className="grid grid-cols-1 gap-6">
               <div>
-                <label className="text-caption-bold font-caption-bold text-neutral-700 block mb-1">
-                  Company Name
-                </label>
-                <p className="text-body font-body text-neutral-900">
-                  {company.name}
-                </p>
+                {isEditing ? (
+                  <TextField label="Company Name" variant="outline" error={false} disabled={false}>
+                    <TextField.Input
+                      value={editedCompany?.name || ""}
+                      onChange={e => setEditedCompany(prev => prev ? { ...prev, name: e.target.value } : null)}
+                      placeholder="Company Name"
+                    />
+                  </TextField>
+                ) : (
+                  <>
+                    <label className="text-body-bold font-body-bold text-neutral-600">Company Name</label>
+                    <p className="text-body font-body text-neutral-900 mt-1">{company.name}</p>
+                  </>
+                )}
               </div>
 
               <div>
-                <label className="text-caption-bold font-caption-bold text-neutral-700 block mb-1">
-                  Website
-                </label>
-                <p className="text-body font-body text-neutral-900">
-                  {company.website ? (
-                    <a 
-                      href={company.website} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-brand-700 hover:underline"
-                    >
-                      {company.website}
-                    </a>
-                  ) : (
-                    '-'
-                  )}
-                </p>
+                {isEditing ? (
+                  <TextField label="Website" variant="outline" error={false} disabled={false}>
+                    <TextField.Input
+                      value={editedCompany?.website || ""}
+                      onChange={e => setEditedCompany(prev => prev ? { ...prev, website: e.target.value } : null)}
+                      placeholder="Website"
+                    />
+                  </TextField>
+                ) : (
+                  <>
+                    <label className="text-body-bold font-body-bold text-neutral-600">Website</label>
+                    <p className="text-body font-body text-neutral-900 mt-1">
+                      {company.website ? (
+                        <a 
+                          href={company.website} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-brand-700 hover:underline"
+                        >
+                          {company.website}
+                        </a>
+                      ) : (
+                        <span className="text-neutral-500">Not provided</span>
+                      )}
+                    </p>
+                  </>
+                )}
               </div>
 
               <div>
-                <label className="text-caption-bold font-caption-bold text-neutral-700 block mb-1">
-                  Headquarters
-                </label>
-                <p className="text-body font-body text-neutral-900">
-                  {company.headquarters || '-'}
-                </p>
+                {isEditing ? (
+                  <TextField label="Headquarters" variant="outline" error={false} disabled={false}>
+                    <TextField.Input
+                      value={editedCompany?.headquarters || ""}
+                      onChange={e => setEditedCompany(prev => prev ? { ...prev, headquarters: e.target.value } : null)}
+                      placeholder="Headquarters"
+                    />
+                  </TextField>
+                ) : (
+                  <>
+                    <label className="text-body-bold font-body-bold text-neutral-600">Headquarters</label>
+                    <p className="text-body font-body text-neutral-900 mt-1">
+                      {company.headquarters || <span className="text-neutral-500">Not provided</span>}
+                    </p>
+                  </>
+                )}
               </div>
 
               <div>
-                <label className="text-caption-bold font-caption-bold text-neutral-700 block mb-1">
-                  Status
-                </label>
-                <p className="text-body font-body text-neutral-900">
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    company.status === 'Active' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {company.status || 'Active'}
-                  </span>
-                </p>
+                {isEditing ? (
+                  <Select
+                    label="Status"
+                    value={editedCompany?.status || "Active"}
+                    onValueChange={value =>
+                      setEditedCompany(prev =>
+                        prev ? { ...prev, status: value } : null
+                      )
+                    }
+                  >
+                    <Select.Item value="Active">Active</Select.Item>
+                    <Select.Item value="Inactive">Inactive</Select.Item>
+                  </Select>
+                ) : (
+                  <>
+                    <label className="text-body-bold font-body-bold text-neutral-600">Status</label>
+                    <p className="text-body font-body text-neutral-900 mt-1">
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        company.status === 'Active' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {company.status || 'Active'}
+                      </span>
+                    </p>
+                  </>
+                )}
               </div>
 
               <div>
-                <label className="text-caption-bold font-caption-bold text-neutral-700 block mb-1">
-                  People Count
-                </label>
-                <p className="text-body font-body text-neutral-900">
+                <label className="text-body-bold font-body-bold text-neutral-600">People Count</label>
+                <p className="text-body font-body text-neutral-900 mt-1">
                   {company.peopleCount || 0} {company.peopleCount === 1 ? 'person' : 'people'}
                 </p>
               </div>
@@ -166,13 +269,30 @@ function CompanyDetail() {
           </div>
         </div>
 
-        <CompanyModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          onSave={handleEdit}
-          company={company}
-          mode="edit"
-        />
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <Dialog.Content>
+            <h2 className="text-heading-3 font-heading-3">Delete Company</h2>
+            <p className="text-body font-body text-neutral-600">
+              Are you sure you want to delete {company.name}? This action cannot be undone.
+            </p>
+            <div className="flex gap-2 justify-end mt-6">
+              <Button
+                variant="neutral-secondary"
+                onClick={() => setIsDeleteDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive-primary"
+                onClick={handleDelete}
+                loading={deleting}
+                disabled={deleting}
+              >
+                Delete
+              </Button>
+            </div>
+          </Dialog.Content>
+        </Dialog>
       </div>
     </DefaultPageLayout>
   );
