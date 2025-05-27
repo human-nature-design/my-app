@@ -6,15 +6,19 @@ import { DefaultPageLayout } from "@/ui/layouts/DefaultPageLayout";
 import { Button } from "@/ui/components/Button";
 import { IconButton } from "@/ui/components/IconButton";
 import { Company, CompanyWithId } from "@/types/company";
+import { PersonWithId } from "@/types/person";
 import { Dialog } from "@/ui/components/Dialog";
 import { TextField } from "@/ui/components/TextField";
 import { Select } from "@/ui/components/Select";
+import { Table } from "@/ui/components/Table";
 
 function CompanyDetail() {
   const router = useRouter();
   const params = useParams();
   const [company, setCompany] = useState<CompanyWithId | null>(null);
+  const [people, setPeople] = useState<PersonWithId[]>([]);
   const [loading, setLoading] = useState(true);
+  const [peopleLoading, setPeopleLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editedCompany, setEditedCompany] = useState<Company | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -23,6 +27,7 @@ function CompanyDetail() {
   useEffect(() => {
     if (params.id) {
       fetchCompany();
+      fetchCompanyPeople();
     }
   }, [params.id]);
 
@@ -44,6 +49,19 @@ function CompanyDetail() {
       router.push('/companies');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCompanyPeople = async () => {
+    try {
+      const response = await fetch(`/api/companies/${params.id}/people`);
+      if (!response.ok) throw new Error('Failed to fetch company people');
+      const data = await response.json();
+      setPeople(data || []);
+    } catch (error) {
+      console.error('Error fetching company people:', error);
+    } finally {
+      setPeopleLoading(false);
     }
   };
 
@@ -266,6 +284,61 @@ function CompanyDetail() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* People Section */}
+        <div className="w-full">
+          <div className="bg-default-background rounded-lg shadow-sm border border-neutral-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-heading-3 font-heading-3 text-neutral-900">People</h2>
+              <span className="text-body font-body text-neutral-500">
+                {people.length} {people.length === 1 ? 'person' : 'people'}
+              </span>
+            </div>
+            
+            {peopleLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <span className="text-body font-body text-neutral-500">Loading people...</span>
+              </div>
+            ) : people.length === 0 ? (
+              <div className="flex items-center justify-center py-8">
+                <span className="text-body font-body text-neutral-500">No people associated with this company</span>
+              </div>
+            ) : (
+              <Table
+                header={
+                  <Table.HeaderRow>
+                    <Table.HeaderCell>Name</Table.HeaderCell>
+                    <Table.HeaderCell>Email</Table.HeaderCell>
+                    <Table.HeaderCell>Phone</Table.HeaderCell>
+                  </Table.HeaderRow>
+                }
+              >
+                {people.map((person) => (
+                  <Table.Row key={person.id} clickable>
+                    <Table.Cell>
+                      <button
+                        onClick={() => router.push(`/people/${person.id}`)}
+                        className="whitespace-nowrap text-body-bold font-body-bold text-brand-700 hover:underline text-left"
+                      >
+                        {person.name}
+                      </button>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <span className="whitespace-nowrap text-body font-body text-neutral-500">
+                        {person.email}
+                      </span>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <span className="whitespace-nowrap text-body font-body text-neutral-500">
+                        {person.phone || '-'}
+                      </span>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table>
+            )}
           </div>
         </div>
 
