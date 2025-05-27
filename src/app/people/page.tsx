@@ -195,10 +195,13 @@ function People() {
           onOpenChange={(open) => setDeleteDialog({ isOpen: open, person: deleteDialog.person })}
         >
           <Dialog.Content>
-            <h2 className="text-heading-3 font-heading-3">Delete Person</h2>
-            <p className="text-body font-body text-neutral-600">
-              Are you sure you want to delete {deleteDialog.person?.name}? This action cannot be undone.
-            </p>
+            <div className="flex flex-col items-center text-center">
+              <SubframeCore.Icon name="FeatherFileWarning" className="w-12 h-12 text-red-500 mb-4" />
+              <h2 className="text-heading-3 font-heading-3">Delete Person</h2>
+              <p className="text-body font-body text-neutral-600">
+                Are you sure you want to delete {deleteDialog.person?.name}? This action cannot be undone.
+              </p>
+            </div>
             <div className="flex gap-2 justify-end mt-6">
               <Button
                 variant="neutral-secondary"

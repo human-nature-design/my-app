@@ -11,6 +11,7 @@ import { Dialog } from "@/ui/components/Dialog";
 import { TextField } from "@/ui/components/TextField";
 import { Select } from "@/ui/components/Select";
 import { Table } from "@/ui/components/Table";
+import * as SubframeCore from "@subframe/core";
 
 function CompanyDetail() {
   const router = useRouter();
@@ -344,10 +345,13 @@ function CompanyDetail() {
 
         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <Dialog.Content>
-            <h2 className="text-heading-3 font-heading-3">Delete Company</h2>
-            <p className="text-body font-body text-neutral-600">
-              Are you sure you want to delete {company.name}? This action cannot be undone.
-            </p>
+            <div className="flex flex-col items-center text-center">
+              <SubframeCore.Icon name="FeatherFileWarning" className="w-12 h-12 text-red-500 mb-4" />
+              <h2 className="text-heading-3 font-heading-3">Delete Company</h2>
+              <p className="text-body font-body text-neutral-600">
+                Are you sure you want to delete {company.name}? This action cannot be undone.
+              </p>
+            </div>
             <div className="flex gap-2 justify-end mt-6">
               <Button
                 variant="neutral-secondary"
