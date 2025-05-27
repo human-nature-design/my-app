@@ -164,6 +164,7 @@ function Companies() {
               <Table.HeaderCell>Name</Table.HeaderCell>
               <Table.HeaderCell>Website</Table.HeaderCell>
               <Table.HeaderCell>Headquarters</Table.HeaderCell>
+              <Table.HeaderCell>Status</Table.HeaderCell>
               <Table.HeaderCell>People Count</Table.HeaderCell>
               <Table.HeaderCell></Table.HeaderCell>
             </Table.HeaderRow>
@@ -171,13 +172,13 @@ function Companies() {
         >
           {loading ? (
             <Table.Row>
-              <Table.Cell colSpan={5}>
+              <Table.Cell colSpan={6}>
                 <span className="text-body font-body text-neutral-500">Loading...</span>
               </Table.Cell>
             </Table.Row>
           ) : companies.length === 0 ? (
             <Table.Row>
-              <Table.Cell colSpan={5}>
+              <Table.Cell colSpan={6}>
                 <span className="text-body font-body text-neutral-500">No companies found</span>
               </Table.Cell>
             </Table.Row>
@@ -200,6 +201,15 @@ function Companies() {
                 <Table.Cell>
                   <span className="whitespace-nowrap text-body font-body text-neutral-500">
                     {company.headquarters || '-'}
+                  </span>
+                </Table.Cell>
+                <Table.Cell>
+                  <span className={`whitespace-nowrap text-body font-body px-2 py-1 rounded-full text-xs ${
+                    company.status === 'Active' 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {company.status || 'Active'}
                   </span>
                 </Table.Cell>
                 <Table.Cell>

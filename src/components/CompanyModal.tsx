@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Dialog } from "@/ui/components/Dialog";
 import { TextField } from "@/ui/components/TextField";
+import { Select } from "@/ui/components/Select";
 import { Button } from "@/ui/components/Button";
 import { Company } from "@/types/company";
 
@@ -174,6 +175,15 @@ export function CompanyModal({ isOpen, onClose, onSave, company, mode }: Company
               placeholder="Enter headquarters location"
             />
           </TextField>
+          
+          <Select
+            label="Status"
+            value={formData.status || 'Active'}
+            onValueChange={(value) => setFormData({ ...formData, status: value })}
+          >
+            <Select.Item value="Active">Active</Select.Item>
+            <Select.Item value="Inactive">Inactive</Select.Item>
+          </Select>
           
           <div className="flex gap-2 justify-end mt-4">
             <Button

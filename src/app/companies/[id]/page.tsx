@@ -141,6 +141,21 @@ function CompanyDetail() {
 
               <div>
                 <label className="text-caption-bold font-caption-bold text-neutral-700 block mb-1">
+                  Status
+                </label>
+                <p className="text-body font-body text-neutral-900">
+                  <span className={`px-2 py-1 rounded-full text-xs ${
+                    company.status === 'Active' 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {company.status || 'Active'}
+                  </span>
+                </p>
+              </div>
+
+              <div>
+                <label className="text-caption-bold font-caption-bold text-neutral-700 block mb-1">
                   People Count
                 </label>
                 <p className="text-body font-body text-neutral-900">
