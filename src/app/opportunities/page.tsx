@@ -12,7 +12,7 @@ function Opportunities() {
   return (
     <DefaultPageLayout>
       <div className="flex h-full w-full flex-col items-start">
-        <div className="flex w-full flex-col items-start gap-8 px-6 py-6">
+        <div className="flex w-full grow shrink-0 basis-0 flex-col items-start gap-8 bg-default-background px-8 py-8 overflow-auto">
           <div className="flex w-full items-center justify-between">
             <span className="text-heading-1 font-heading-1 text-default-font">
               Opportunities
@@ -72,8 +72,7 @@ function Opportunities() {
               Filter
             </Button>
           </div>
-        </div>
-        <div className="flex w-full grow shrink-0 basis-0 items-start gap-4 px-6 pb-6 overflow-auto">
+          <div className="flex w-full grow shrink-0 basis-0 items-start gap-4 overflow-auto">
           <div className="flex w-64 flex-none flex-col items-start gap-4">
             <div className="flex w-full items-center justify-between rounded-md bg-neutral-50 px-4 py-2">
               <span className="text-body-bold font-body-bold text-default-font">
@@ -213,6 +212,7 @@ function Opportunities() {
                 </div>
               </div>
             </div>
+          </div>
           </div>
         </div>
       </div>
