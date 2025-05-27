@@ -15,7 +15,6 @@ import { Avatar } from "../components/Avatar";
 import { DropdownMenu } from "../components/DropdownMenu";
 import * as SubframeCore from "@subframe/core";
 import { IconButton } from "../components/IconButton";
-import { usePathname } from "next/navigation";
 
 interface DefaultPageLayoutRootProps
   extends React.HTMLAttributes<HTMLDivElement> {
@@ -30,7 +29,6 @@ const DefaultPageLayoutRoot = React.forwardRef<
   { children, className, ...otherProps }: DefaultPageLayoutRootProps,
   ref
 ) {
-  const pathname = usePathname();
   return (
     <div
       className={SubframeUtils.twClassNames(
@@ -91,13 +89,13 @@ const DefaultPageLayoutRoot = React.forwardRef<
           </>
         }
       >
-        <SidebarWithSections.NavItem icon="FeatherHome" selected={pathname === "/"}>
+        <SidebarWithSections.NavItem icon="FeatherHome" selected={true}>
           Companies
         </SidebarWithSections.NavItem>
-        <SidebarWithSections.NavItem icon="FeatherUsers" selected={pathname === "/people"}>
+        <SidebarWithSections.NavItem icon="FeatherUsers">
           People
         </SidebarWithSections.NavItem>
-        <SidebarWithSections.NavItem icon="FeatherMessageCircle" selected={pathname === "/activities"}>
+        <SidebarWithSections.NavItem icon="FeatherMessageCircle">
           Activities
         </SidebarWithSections.NavItem>
       </SidebarWithSections>

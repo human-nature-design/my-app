@@ -1,54 +1,95 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { DefaultPageLayout } from "@/ui/layouts/DefaultPageLayout";
 import { UniversalSearch } from "@/ui/components/UniversalSearch";
 import { Button } from "@/ui/components/Button";
 import { Table } from "@/ui/components/Table";
-import { Badge } from "@/ui/components/Badge";
 import { DropdownMenu } from "@/ui/components/DropdownMenu";
 import * as SubframeCore from "@subframe/core";
 import { IconButton } from "@/ui/components/IconButton";
-import { supabase } from "@/lib/supabase";
-import { AreaChart } from "@/ui/components/AreaChart";
+import { PersonModal } from "@/components/PersonModal";
+import { Dialog } from "@/ui/components/Dialog";
 
-interface Person {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  companyId: number;
-}
+import { Person, PersonWithId } from "@/types/person";
 
 function People() {
-  const [people, setPeople] = useState<Person[]>([]);
+  const router = useRouter();
+  const [people, setPeople] = useState<PersonWithId[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; person: PersonWithId | null }>({
+    isOpen: false,
+    person: null
+  });
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    async function fetchPeople() {
-      try {
-        const { data, error } = await supabase
-          .from('People')
-          .select('*');
-        
-        if (error) throw error;
-        setPeople(data || []);
-      } catch (error) {
-        console.error('Error fetching people:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchPeople();
   }, []);
+
+  const fetchPeople = async () => {
+    try {
+      const response = await fetch('/api/people');
+      if (!response.ok) throw new Error('Failed to fetch people');
+      const data = await response.json();
+      setPeople(data || []);
+    } catch (error) {
+      console.error('Error fetching people:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreate = async (newPerson: Person) => {
+    try {
+      const response = await fetch('/api/people', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPerson),
+      });
+
+      if (!response.ok) throw new Error('Failed to create person');
+      
+      await fetchPeople();
+      setIsCreateModalOpen(false);
+    } catch (error) {
+      console.error('Error creating person:', error);
+      throw error;
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteDialog.person) return;
+    
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/people/${deleteDialog.person.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete person');
+      
+      await fetchPeople();
+      setDeleteDialog({ isOpen: false, person: null });
+    } catch (error) {
+      console.error('Error deleting person:', error);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handlePersonClick = (person: PersonWithId) => {
+    router.push(`/people/${person.id}`);
+  };
 
   return (
     <DefaultPageLayout>
       <div className="container max-w-none flex h-full w-full flex-col items-start gap-4 bg-default-background py-12">
         <UniversalSearch icon="FeatherSearch" />
         <div className="flex w-full items-center gap-2">
-          <Button onClick={(event: React.MouseEvent<HTMLButtonElement>) => {}}>
+          <Button onClick={() => setIsCreateModalOpen(true)}>
             Add person
           </Button>
         </div>
@@ -59,22 +100,32 @@ function People() {
               <Table.HeaderCell>Email</Table.HeaderCell>
               <Table.HeaderCell>Phone</Table.HeaderCell>
               <Table.HeaderCell>Company</Table.HeaderCell>
+              <Table.HeaderCell></Table.HeaderCell>
             </Table.HeaderRow>
           }
         >
           {loading ? (
             <Table.Row>
-              <Table.Cell colSpan={4}>
+              <Table.Cell colSpan={5}>
                 <span className="text-body font-body text-neutral-500">Loading...</span>
+              </Table.Cell>
+            </Table.Row>
+          ) : people.length === 0 ? (
+            <Table.Row>
+              <Table.Cell colSpan={5}>
+                <span className="text-body font-body text-neutral-500">No people found</span>
               </Table.Cell>
             </Table.Row>
           ) : (
             people.map((person) => (
               <Table.Row key={person.id}>
                 <Table.Cell>
-                  <span className="whitespace-nowrap text-body-bold font-body-bold text-neutral-700">
+                  <button
+                    onClick={() => handlePersonClick(person)}
+                    className="whitespace-nowrap text-body-bold font-body-bold text-brand-700 hover:underline text-left"
+                  >
                     {person.name}
-                  </span>
+                  </button>
                 </Table.Cell>
                 <Table.Cell>
                   <span className="whitespace-nowrap text-body font-body text-neutral-500">
@@ -83,12 +134,12 @@ function People() {
                 </Table.Cell>
                 <Table.Cell>
                   <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    {person.phone}
+                    {person.phone || '-'}
                   </span>
                 </Table.Cell>
                 <Table.Cell>
                   <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    {person.companyId}
+                    {person.Companies?.name || '-'}
                   </span>
                 </Table.Cell>
                 <Table.Cell>
@@ -109,16 +160,16 @@ function People() {
                           asChild={true}
                         >
                           <DropdownMenu>
-                            <DropdownMenu.DropdownItem icon="FeatherStar">
-                              Favorite
-                            </DropdownMenu.DropdownItem>
-                            <DropdownMenu.DropdownItem icon="FeatherPlus">
-                              Add
-                            </DropdownMenu.DropdownItem>
-                            <DropdownMenu.DropdownItem icon="FeatherEdit2">
+                            <DropdownMenu.DropdownItem 
+                              icon="FeatherEdit2"
+                              onClick={() => handlePersonClick(person)}
+                            >
                               Edit
                             </DropdownMenu.DropdownItem>
-                            <DropdownMenu.DropdownItem icon="FeatherTrash">
+                            <DropdownMenu.DropdownItem 
+                              icon="FeatherTrash"
+                              onClick={() => setDeleteDialog({ isOpen: true, person })}
+                            >
                               Delete
                             </DropdownMenu.DropdownItem>
                           </DropdownMenu>
@@ -131,29 +182,45 @@ function People() {
             ))
           )}
         </Table>
+
+        <PersonModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onSave={handleCreate}
+          mode="create"
+        />
+
+        <Dialog 
+          open={deleteDialog.isOpen} 
+          onOpenChange={(open) => setDeleteDialog({ isOpen: open, person: deleteDialog.person })}
+        >
+          <Dialog.Content>
+            <h2 className="text-heading-3 font-heading-3">Delete Person</h2>
+            <p className="text-body font-body text-neutral-600">
+              Are you sure you want to delete {deleteDialog.person?.name}? This action cannot be undone.
+            </p>
+            <div className="flex gap-2 justify-end mt-6">
+              <Button
+                variant="neutral-secondary"
+                onClick={() => setDeleteDialog({ isOpen: false, person: null })}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive-primary"
+                onClick={handleDelete}
+                loading={deleting}
+                disabled={deleting}
+              >
+                Delete
+              </Button>
+            </div>
+          </Dialog.Content>
+        </Dialog>
       </div>
-
-      <AreaChart
-  stacked={false}
-  categories={["Biology", "Business", "Psychology"]}
-  data={[
-    { Year: "2015", Psychology: 120, Business: 110, Biology: 100 },
-    { Year: "2016", Psychology: 130, Business: 95, Biology: 105 },
-    { Year: "2017", Psychology: 115, Business: 105, Biology: 110 },
-    { Year: "2018", Psychology: 125, Business: 120, Biology: 90 },
-    { Year: "2019", Psychology: 110, Business: 130, Biology: 85 },
-    { Year: "2020", Psychology: 135, Business: 100, Biology: 95 },
-    { Year: "2021", Psychology: 105, Business: 115, Biology: 120 },
-    { Year: "2022", Psychology: 140, Business: 125, Biology: 130 },
-  ]}
-  index={"Year"}
-/>
-
     </DefaultPageLayout>
   );
 }
-
-
 
 export default People;
 
