@@ -7,16 +7,22 @@ import { UniversalSearch } from "@/ui/components/UniversalSearch";
 import { Button } from "@/ui/components/Button";
 import { Table } from "@/ui/components/Table";
 import { DropdownMenu } from "@/ui/components/DropdownMenu";
+import { Select } from "@/ui/components/Select";
+import { Badge } from "@/ui/components/Badge";
 import * as SubframeCore from "@subframe/core";
 import { IconButton } from "@/ui/components/IconButton";
 import { PersonModal } from "@/components/PersonModal";
 import { Dialog } from "@/ui/components/Dialog";
 
 import { Person, PersonWithId } from "@/types/person";
+import { CompanyWithId } from "@/types/company";
 
 function People() {
   const router = useRouter();
   const [people, setPeople] = useState<PersonWithId[]>([]);
+  const [companies, setCompanies] = useState<CompanyWithId[]>([]);
+  const [filteredPeople, setFilteredPeople] = useState<PersonWithId[]>([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; person: PersonWithId | null }>({
@@ -27,7 +33,19 @@ function People() {
 
   useEffect(() => {
     fetchPeople();
+    fetchCompanies();
   }, []);
+
+  useEffect(() => {
+    // Filter people based on selected company
+    if (selectedCompanyId === "all") {
+      setFilteredPeople(people);
+    } else {
+      setFilteredPeople(people.filter(person => 
+        person.companyId?.toString() === selectedCompanyId
+      ));
+    }
+  }, [people, selectedCompanyId]);
 
   const fetchPeople = async () => {
     try {
@@ -39,6 +57,17 @@ function People() {
       console.error('Error fetching people:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCompanies = async () => {
+    try {
+      const response = await fetch('/api/companies');
+      if (!response.ok) throw new Error('Failed to fetch companies');
+      const data = await response.json();
+      setCompanies(data || []);
+    } catch (error) {
+      console.error('Error fetching companies:', error);
     }
   };
 
@@ -84,15 +113,59 @@ function People() {
     router.push(`/people/${person.id}`);
   };
 
+  const handleCompanyClick = (companyId: number) => {
+    router.push(`/companies/${companyId}`);
+  };
+
+  const getSelectedCompanyName = () => {
+    if (selectedCompanyId === "all") return "All Companies";
+    const company = companies.find(c => c.id.toString() === selectedCompanyId);
+    return company?.name || "Unknown Company";
+  };
+
   return (
     <DefaultPageLayout>
       <div className="container max-w-none flex h-full w-full flex-col items-start gap-4 bg-default-background py-12">
         <UniversalSearch icon="FeatherSearch" />
-        <div className="flex w-full items-center gap-2">
-          <Button onClick={() => setIsCreateModalOpen(true)}>
-            Add person
-          </Button>
+        <div className="flex w-full items-center gap-2 justify-between">
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setIsCreateModalOpen(true)}>
+              Add person
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Select
+              value={selectedCompanyId}
+              onValueChange={setSelectedCompanyId}
+              placeholder="Filter by company"
+              icon="FeatherBuilding"
+            >
+              <Select.Item value="all">All Companies</Select.Item>
+              {companies.map((company) => (
+                <Select.Item key={company.id} value={company.id.toString()}>
+                  {company.name}
+                </Select.Item>
+              ))}
+            </Select>
+          </div>
         </div>
+        
+        {selectedCompanyId !== "all" && (
+          <div className="flex items-center gap-2">
+            <span className="text-body font-body text-neutral-600">Filtered by:</span>
+            <Badge variant="brand" icon="FeatherBuilding">
+              {getSelectedCompanyName()}
+            </Badge>
+            <Button
+              variant="neutral-secondary"
+              size="small"
+              onClick={() => setSelectedCompanyId("all")}
+            >
+              Clear filter
+            </Button>
+          </div>
+        )}
+
         <Table
           header={
             <Table.HeaderRow>
@@ -110,14 +183,16 @@ function People() {
                 <span className="text-body font-body text-neutral-500">Loading...</span>
               </Table.Cell>
             </Table.Row>
-          ) : people.length === 0 ? (
+          ) : filteredPeople.length === 0 ? (
             <Table.Row>
               <Table.Cell colSpan={5}>
-                <span className="text-body font-body text-neutral-500">No people found</span>
+                <span className="text-body font-body text-neutral-500">
+                  {selectedCompanyId === "all" ? "No people found" : `No people found for ${getSelectedCompanyName()}`}
+                </span>
               </Table.Cell>
             </Table.Row>
           ) : (
-            people.map((person) => (
+            filteredPeople.map((person) => (
               <Table.Row key={person.id}>
                 <Table.Cell>
                   <button
@@ -138,9 +213,21 @@ function People() {
                   </span>
                 </Table.Cell>
                 <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    {person.Companies?.name || '-'}
-                  </span>
+                  {person.Companies?.name ? (
+                    <button
+                      onClick={() => handleCompanyClick(person.companyId!)}
+                      className="inline-flex"
+                    >
+                      <Badge 
+                        variant="neutral" 
+                        className="hover:bg-neutral-200 transition-colors cursor-pointer"
+                      >
+                        {person.Companies.name}
+                      </Badge>
+                    </button>
+                  ) : (
+                    <span className="text-body font-body text-neutral-500">-</span>
+                  )}
                 </Table.Cell>
                 <Table.Cell>
                   <div className="flex grow shrink-0 basis-0 items-center justify-end">

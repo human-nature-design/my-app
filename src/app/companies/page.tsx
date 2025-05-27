@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import { DefaultPageLayout } from "@/ui/layouts/DefaultPageLayout";
 import { UniversalSearch } from "@/ui/components/UniversalSearch";
 import { Button } from "@/ui/components/Button";
+import { TextField } from "@/ui/components/TextField";
+import { Select } from "@/ui/components/Select";
 import { Table } from "@/ui/components/Table";
+import { Badge } from "@/ui/components/Badge";
 import { DropdownMenu } from "@/ui/components/DropdownMenu";
 import * as SubframeCore from "@subframe/core";
 import { IconButton } from "@/ui/components/IconButton";
@@ -24,6 +27,8 @@ function Companies() {
     company: null
   });
   const [deleting, setDeleting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     fetchCompanies();
@@ -143,108 +148,169 @@ function Companies() {
     router.push(`/companies/${company.id}`);
   };
 
+  // Filter companies based on search term and status
+  const filteredCompanies = companies.filter(company => {
+    const matchesSearch = company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (company.website && company.website.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                         (company.headquarters && company.headquarters.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesStatus = !statusFilter || company.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'Active':
+        return 'success';
+      case 'Prospect':
+        return 'warning';
+      case 'Inactive':
+        return 'neutral';
+      default:
+        return 'neutral';
+    }
+  };
+
   return (
     <DefaultPageLayout>
-      <div className="container max-w-none flex h-full w-full flex-col items-start gap-4 bg-default-background py-12">
+      <div className="flex h-full w-full flex-col items-start">
         <UniversalSearch icon="FeatherSearch" />
-        <div className="flex w-full items-center gap-2">
-          <Button onClick={() => setIsCreateModalOpen(true)}>
-            Add company
-          </Button>
+        <div className="flex w-full grow shrink-0 basis-0 flex-col items-start gap-8 bg-default-background px-8 py-8 overflow-auto">
+          <div className="flex w-full items-center justify-between">
+            <span className="text-heading-1 font-heading-1 text-default-font">
+              Companies
+            </span>
+            <Button
+              icon="FeatherPlus"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              Add Company
+            </Button>
+          </div>
+          <div className="flex w-full flex-col items-start gap-4">
+            <div className="flex w-full items-center gap-4">
+              <TextField
+                className="h-auto w-48 flex-none"
+                label=""
+                helpText=""
+                icon="FeatherSearch"
+              >
+                <TextField.Input
+                  className="w-auto grow shrink-0 basis-0"
+                  placeholder="Search"
+                  value={searchTerm}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(event.target.value)}
+                />
+              </TextField>
+              <Select
+                disabled={false}
+                error={false}
+                variant="outline"
+                label=""
+                placeholder="Filter by status"
+                helpText=""
+                icon={null}
+                value={statusFilter}
+                onValueChange={(value: string) => setStatusFilter(value === "all" ? undefined : value)}
+              >
+                <Select.Item value="all">All Statuses</Select.Item>
+                <Select.Item value="Active">Active</Select.Item>
+                <Select.Item value="Prospect">Prospect</Select.Item>
+                <Select.Item value="Inactive">Inactive</Select.Item>
+              </Select>
+            </div>
+            <Table
+              header={
+                <Table.HeaderRow>
+                  <Table.HeaderCell>Name</Table.HeaderCell>
+                  <Table.HeaderCell>Website</Table.HeaderCell>
+                  <Table.HeaderCell>Headquarters</Table.HeaderCell>
+                  <Table.HeaderCell>Status</Table.HeaderCell>
+                  <Table.HeaderCell></Table.HeaderCell>
+                </Table.HeaderRow>
+              }
+            >
+              {loading ? (
+                <Table.Row>
+                  <Table.Cell colSpan={5}>
+                    <span className="text-body font-body text-neutral-500">Loading...</span>
+                  </Table.Cell>
+                </Table.Row>
+              ) : filteredCompanies.length === 0 ? (
+                <Table.Row>
+                  <Table.Cell colSpan={5}>
+                    <span className="text-body font-body text-neutral-500">No companies found</span>
+                  </Table.Cell>
+                </Table.Row>
+              ) : (
+                filteredCompanies.map((company) => (
+                  <Table.Row key={company.id}>
+                    <Table.Cell>
+                      <button
+                        onClick={() => handleCompanyClick(company)}
+                        className="whitespace-nowrap text-body-bold font-body-bold text-neutral-700 hover:underline text-left"
+                      >
+                        {company.name}
+                      </button>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <span className="whitespace-nowrap text-body font-body text-neutral-500">
+                        {company.website || '-'}
+                      </span>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <span className="whitespace-nowrap text-body font-body text-neutral-500">
+                        {company.headquarters || '-'}
+                      </span>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Badge variant={getStatusBadgeVariant(company.status || 'Active')}>
+                        {company.status || 'Active'}
+                      </Badge>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <div className="flex grow shrink-0 basis-0 items-center justify-end">
+                        <SubframeCore.DropdownMenu.Root>
+                          <SubframeCore.DropdownMenu.Trigger asChild={true}>
+                            <IconButton
+                              size="medium"
+                              icon="FeatherMoreHorizontal"
+                              onClick={(event: React.MouseEvent<HTMLButtonElement>) => {}}
+                            />
+                          </SubframeCore.DropdownMenu.Trigger>
+                          <SubframeCore.DropdownMenu.Portal>
+                            <SubframeCore.DropdownMenu.Content
+                              side="bottom"
+                              align="end"
+                              sideOffset={8}
+                              asChild={true}
+                            >
+                              <DropdownMenu>
+                                <DropdownMenu.DropdownItem 
+                                  icon="FeatherEdit2"
+                                  onClick={() => handleCompanyClick(company)}
+                                >
+                                  Edit
+                                </DropdownMenu.DropdownItem>
+                                <DropdownMenu.DropdownItem 
+                                  icon="FeatherTrash"
+                                  onClick={() => setDeleteDialog({ isOpen: true, company })}
+                                >
+                                  Delete
+                                </DropdownMenu.DropdownItem>
+                              </DropdownMenu>
+                            </SubframeCore.DropdownMenu.Content>
+                          </SubframeCore.DropdownMenu.Portal>
+                        </SubframeCore.DropdownMenu.Root>
+                      </div>
+                    </Table.Cell>
+                  </Table.Row>
+                ))
+              )}
+            </Table>
+          </div>
         </div>
-        <Table
-          header={
-            <Table.HeaderRow>
-              <Table.HeaderCell>Name</Table.HeaderCell>
-              <Table.HeaderCell>Website</Table.HeaderCell>
-              <Table.HeaderCell>Headquarters</Table.HeaderCell>
-              <Table.HeaderCell>Status</Table.HeaderCell>
-              <Table.HeaderCell></Table.HeaderCell>
-            </Table.HeaderRow>
-          }
-        >
-          {loading ? (
-            <Table.Row>
-              <Table.Cell colSpan={5}>
-                <span className="text-body font-body text-neutral-500">Loading...</span>
-              </Table.Cell>
-            </Table.Row>
-          ) : companies.length === 0 ? (
-            <Table.Row>
-              <Table.Cell colSpan={5}>
-                <span className="text-body font-body text-neutral-500">No companies found</span>
-              </Table.Cell>
-            </Table.Row>
-          ) : (
-            companies.map((company) => (
-              <Table.Row key={company.id}>
-                <Table.Cell>
-                  <button
-                    onClick={() => handleCompanyClick(company)}
-                    className="whitespace-nowrap text-body-bold font-body-bold text-brand-700 hover:underline text-left"
-                  >
-                    {company.name}
-                  </button>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    {company.website || '-'}
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    {company.headquarters || '-'}
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className={`whitespace-nowrap text-body font-body px-2 py-1 rounded-full text-xs ${
-                    company.status === 'Active' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {company.status || 'Active'}
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <div className="flex grow shrink-0 basis-0 items-center justify-end">
-                    <SubframeCore.DropdownMenu.Root>
-                      <SubframeCore.DropdownMenu.Trigger asChild={true}>
-                        <IconButton
-                          size="medium"
-                          icon="FeatherMoreHorizontal"
-                          onClick={(event: React.MouseEvent<HTMLButtonElement>) => {}}
-                        />
-                      </SubframeCore.DropdownMenu.Trigger>
-                      <SubframeCore.DropdownMenu.Portal>
-                        <SubframeCore.DropdownMenu.Content
-                          side="bottom"
-                          align="end"
-                          sideOffset={8}
-                          asChild={true}
-                        >
-                          <DropdownMenu>
-                            <DropdownMenu.DropdownItem 
-                              icon="FeatherEdit2"
-                              onClick={() => handleCompanyClick(company)}
-                            >
-                              Edit
-                            </DropdownMenu.DropdownItem>
-                            <DropdownMenu.DropdownItem 
-                              icon="FeatherTrash"
-                              onClick={() => setDeleteDialog({ isOpen: true, company })}
-                            >
-                              Delete
-                            </DropdownMenu.DropdownItem>
-                          </DropdownMenu>
-                        </SubframeCore.DropdownMenu.Content>
-                      </SubframeCore.DropdownMenu.Portal>
-                    </SubframeCore.DropdownMenu.Root>
-                  </div>
-                </Table.Cell>
-              </Table.Row>
-            ))
-          )}
-        </Table>
 
         <CompanyModal
           isOpen={isCreateModalOpen}
