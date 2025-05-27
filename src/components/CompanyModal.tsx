@@ -5,6 +5,7 @@ import { Dialog } from "@/ui/components/Dialog";
 import { TextField } from "@/ui/components/TextField";
 import { Select } from "@/ui/components/Select";
 import { Button } from "@/ui/components/Button";
+import { IconButton } from "@/ui/components/IconButton";
 import { Company } from "@/types/company";
 
 interface CompanyModalProps {
@@ -128,80 +129,89 @@ export function CompanyModal({ isOpen, onClose, onSave, company, mode }: Company
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <Dialog.Content>
-        <h2 className="text-heading-3 font-heading-3">
-          {mode === 'create' ? 'Add New Company' : 'Edit Company'}
-        </h2>
-        
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-4">
-          {submitError && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-600">{submitError}</p>
+      <Dialog.Content className="p-4 sm:p-6 lg:p-8 max-w-md sm:max-w-lg relative">
+        <IconButton
+          icon="FeatherX"
+          variant="neutral-tertiary"
+          size="small"
+          onClick={onClose}
+          className="absolute top-3 right-3 sm:top-4 sm:right-4"
+        />
+        <div className="pl-2 sm:pl-4 lg:pl-6 pr-8 sm:pr-10">
+          <h2 className="text-heading-3 font-heading-3">
+            {mode === 'create' ? 'Add New Company' : 'Edit Company'}
+          </h2>
+          
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4 sm:gap-5 lg:gap-6 mt-4 sm:mt-6 pb-4 sm:pb-6 lg:pb-8">
+            {submitError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-600">{submitError}</p>
+              </div>
+            )}
+            
+            <TextField
+              label="Company Name"
+              error={!!errors.name}
+              helpText={errors.name}
+            >
+              <TextField.Input
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Enter company name"
+                required
+              />
+            </TextField>
+            
+            <TextField
+              label="Website"
+              error={!!errors.website}
+              helpText={errors.website}
+            >
+              <TextField.Input
+                type="text"
+                value={formData.website || ''}
+                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                placeholder="Enter website (e.g., example.com or https://example.com)"
+              />
+            </TextField>
+            
+            <TextField
+              label="Headquarters"
+            >
+              <TextField.Input
+                value={formData.headquarters || ''}
+                onChange={(e) => setFormData({ ...formData, headquarters: e.target.value })}
+                placeholder="Enter headquarters location"
+              />
+            </TextField>
+            
+            <Select
+              label="Status"
+              value={formData.status || 'Active'}
+              onValueChange={(value) => setFormData({ ...formData, status: value })}
+            >
+              <Select.Item value="Active">Active</Select.Item>
+              <Select.Item value="Inactive">Inactive</Select.Item>
+            </Select>
+            
+            <div className="flex gap-2 sm:gap-3 justify-end mt-6 sm:mt-8 pt-2 sm:pt-4">
+              <Button
+                variant="neutral-secondary"
+                onClick={onClose}
+                type="button"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                loading={loading}
+                disabled={loading}
+              >
+                {mode === 'create' ? 'Add Company' : 'Save Changes'}
+              </Button>
             </div>
-          )}
-          
-          <TextField
-            label="Company Name"
-            error={!!errors.name}
-            helpText={errors.name}
-          >
-            <TextField.Input
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Enter company name"
-              required
-            />
-          </TextField>
-          
-          <TextField
-            label="Website"
-            error={!!errors.website}
-            helpText={errors.website}
-          >
-            <TextField.Input
-              type="text"
-              value={formData.website || ''}
-              onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-              placeholder="Enter website (e.g., example.com or https://example.com)"
-            />
-          </TextField>
-          
-          <TextField
-            label="Headquarters"
-          >
-            <TextField.Input
-              value={formData.headquarters || ''}
-              onChange={(e) => setFormData({ ...formData, headquarters: e.target.value })}
-              placeholder="Enter headquarters location"
-            />
-          </TextField>
-          
-          <Select
-            label="Status"
-            value={formData.status || 'Active'}
-            onValueChange={(value) => setFormData({ ...formData, status: value })}
-          >
-            <Select.Item value="Active">Active</Select.Item>
-            <Select.Item value="Inactive">Inactive</Select.Item>
-          </Select>
-          
-          <div className="flex gap-2 justify-end mt-4">
-            <Button
-              variant="neutral-secondary"
-              onClick={onClose}
-              type="button"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              loading={loading}
-              disabled={loading}
-            >
-              {mode === 'create' ? 'Add Company' : 'Save Changes'}
-            </Button>
-          </div>
-        </form>
+          </form>
+        </div>
       </Dialog.Content>
     </Dialog>
   );

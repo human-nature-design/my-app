@@ -9,10 +9,10 @@ import { Table } from "@/ui/components/Table";
 import { DropdownMenu } from "@/ui/components/DropdownMenu";
 import * as SubframeCore from "@subframe/core";
 import { IconButton } from "@/ui/components/IconButton";
-import { CompanyModal } from "@/components/CompanyModal";
+import { CompanyModal } from "../../components/CompanyModal";
 import { Dialog } from "@/ui/components/Dialog";
 
-import { Company, CompanyWithId } from "@/types/company";
+import { Company, CompanyWithId } from "../../types/company";
 
 function Companies() {
   const router = useRouter();
