@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DefaultPageLayout } from "@/ui/layouts/DefaultPageLayout";
-import { UniversalSearch } from "@/ui/components/UniversalSearch";
 import { Button } from "@/ui/components/Button";
 import { TextField } from "@/ui/components/TextField";
 import { Table } from "@/ui/components/Table";
@@ -121,7 +120,6 @@ function People() {
   return (
     <DefaultPageLayout>
       <div className="flex h-full w-full flex-col items-start">
-        <UniversalSearch icon="FeatherSearch" />
         <div className="flex w-full grow shrink-0 basis-0 flex-col items-start gap-8 bg-default-background px-8 py-8 overflow-auto">
           <div className="flex w-full items-center justify-between">
             <span className="text-heading-1 font-heading-1 text-default-font">

@@ -37,7 +37,7 @@ export * from "./components/Calendar"
 export * from "./components/TreeView"
 export * from "./components/TextArea"
 export * from "./components/BarChart"
-export * from "./components/UniversalSearch"
+
 export * from "./components/FullscreenDialog"
 export * from "./components/Stepper"
 export * from "./components/Button"

@@ -15,7 +15,7 @@ function Opportunities() {
         <div className="flex w-full flex-col items-start gap-8 px-6 py-6">
           <div className="flex w-full items-center justify-between">
             <span className="text-heading-1 font-heading-1 text-default-font">
-              Pipeline
+              Opportunities
             </span>
             <Button
               icon="FeatherPlus"
