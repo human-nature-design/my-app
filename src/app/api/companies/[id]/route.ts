@@ -67,7 +67,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { name, website, headquarters } = body;
+    const { name, website, headquarters, status } = body;
 
     // Validate required fields
     if (!name) {
@@ -79,7 +79,7 @@ export async function PUT(
 
     const { data, error } = await supabase
       .from('Companies')
-      .update({ name, website, headquarters })
+      .update({ name, website, headquarters, status })
       .eq('id', id)
       .select(`
         *,
@@ -159,4 +159,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-} 
+}
