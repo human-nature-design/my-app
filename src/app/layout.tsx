@@ -2,8 +2,8 @@ import "./globals.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Subframe Next.js Starter",
-  description: "Your starter kit for integrating Subframe into Next.js",
+  title: "CRM 6",
+  description: "John prototype of a CRM",
 };
 
 export default function RootLayout({

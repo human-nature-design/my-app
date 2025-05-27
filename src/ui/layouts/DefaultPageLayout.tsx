@@ -9,7 +9,7 @@
  */
 
 import React from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import * as SubframeUtils from "../utils";
 import { SidebarWithSections } from "../components/SidebarWithSections";
 import { Avatar } from "../components/Avatar";
@@ -30,20 +30,7 @@ const DefaultPageLayoutRoot = React.forwardRef<
   { children, className, ...otherProps }: DefaultPageLayoutRootProps,
   ref
 ) {
-  const router = useRouter();
   const pathname = usePathname();
-
-  const handleNavigateToCompanies = () => {
-    router.push('/companies');
-  };
-
-  const handleNavigateToPeople = () => {
-    router.push('/people');
-  };
-
-  // Determine which nav item should be selected based on current path
-  const isCompaniesSelected = pathname?.startsWith('/companies') ?? false;
-  const isPeopleSelected = pathname?.startsWith('/people') ?? false;
 
   return (
     <div
@@ -106,21 +93,32 @@ const DefaultPageLayoutRoot = React.forwardRef<
         }
       >
         <SidebarWithSections.NavItem 
-          icon="FeatherHome" 
-          selected={isCompaniesSelected}
-          onClick={handleNavigateToCompanies}
+          icon="FeatherBox"
+          href="/hub"
+          selected={pathname === '/hub'}
+        >
+          Hub
+        </SidebarWithSections.NavItem>
+        <SidebarWithSections.NavItem 
+          icon="FeatherHome"
+          href="/companies"
+          selected={pathname === '/companies'}
         >
           Companies
         </SidebarWithSections.NavItem>
         <SidebarWithSections.NavItem 
           icon="FeatherUsers"
-          selected={isPeopleSelected}
-          onClick={handleNavigateToPeople}
+          href="/people"
+          selected={pathname === '/people'}
         >
           People
         </SidebarWithSections.NavItem>
-        <SidebarWithSections.NavItem icon="FeatherMessageCircle">
-          Activities
+        <SidebarWithSections.NavItem 
+          icon="FeatherDoorOpen"
+          href="/opportunities"
+          selected={pathname === '/opportunities'}
+        >
+          Opportunities
         </SidebarWithSections.NavItem>
       </SidebarWithSections>
       {children ? (

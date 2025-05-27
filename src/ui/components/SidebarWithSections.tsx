@@ -7,6 +7,7 @@
  */
 
 import React from "react";
+import Link from "next/link";
 import * as SubframeUtils from "../utils";
 import * as SubframeCore from "@subframe/core";
 
@@ -15,6 +16,7 @@ interface NavItemProps extends React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
   selected?: boolean;
   rightSlot?: React.ReactNode;
+  href?: string;
   className?: string;
 }
 
@@ -24,12 +26,13 @@ const NavItem = React.forwardRef<HTMLElement, NavItemProps>(function NavItem(
     children,
     selected = false,
     rightSlot,
+    href,
     className,
     ...otherProps
   }: NavItemProps,
   ref
 ) {
-  return (
+  const content = (
     <div
       className={SubframeUtils.twClassNames(
         "group/2713e17b flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 hover:bg-neutral-50 active:bg-neutral-100",
@@ -59,6 +62,12 @@ const NavItem = React.forwardRef<HTMLElement, NavItemProps>(function NavItem(
       {rightSlot ? <div className="flex items-center">{rightSlot}</div> : null}
     </div>
   );
+
+  if (href) {
+    return <Link href={href}>{content}</Link>;
+  }
+
+  return content;
 });
 
 interface NavSectionProps extends React.HTMLAttributes<HTMLDivElement> {

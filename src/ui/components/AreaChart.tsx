@@ -21,7 +21,11 @@ const AreaChartRoot = React.forwardRef<HTMLElement, AreaChartRootProps>(
   ) {
     return (
       <SubframeCore.AreaChart
-        className={SubframeUtils.twClassNames("h-80 w-full", className)}
+        className={SubframeUtils.twClassNames(
+          "group/8aa1e7b3 h-80 w-full",
+          { flex: stacked },
+          className
+        )}
         ref={ref as any}
         stacked={stacked}
         colors={[
