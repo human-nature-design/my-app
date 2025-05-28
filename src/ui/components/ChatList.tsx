@@ -38,7 +38,7 @@ const ChatListItem = React.forwardRef<HTMLElement, ChatListItemProps>(
     return (
       <div
         className={SubframeUtils.twClassNames(
-          "group/f0df7a36 flex w-full cursor-pointer items-center gap-4 overflow-hidden rounded-md px-3 py-3 hover:bg-neutral-50 active:bg-neutral-100",
+          "group/f0df7a36 flex w-full cursor-pointer items-center gap-4 overflow-hidden rounded-md px-4 py-4 hover:bg-neutral-50 active:bg-neutral-100",
           { "bg-brand-100 hover:bg-brand-100 active:bg-brand-50": selected },
           className
         )}
@@ -112,7 +112,7 @@ const ChatListRoot = React.forwardRef<HTMLElement, ChatListRootProps>(
     return children ? (
       <div
         className={SubframeUtils.twClassNames(
-          "flex w-full flex-col items-start gap-1",
+          "flex w-full flex-col items-start gap-3",
           className
         )}
         ref={ref as any}
