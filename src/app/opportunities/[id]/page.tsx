@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { DefaultPageLayout } from "@/ui/layouts/DefaultPageLayout";
 import { Button } from "@/ui/components/Button";
@@ -24,13 +24,7 @@ export default function OpportunityDetail() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    if (params.id) {
-      fetchOpportunity();
-    }
-  }, [params.id]);
-
-  const fetchOpportunity = async () => {
+  const fetchOpportunity = useCallback(async () => {
     try {
       const response = await fetch(`/api/opportunities/${params.id}`);
       if (!response.ok) {
@@ -49,7 +43,13 @@ export default function OpportunityDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id, router]);
+
+  useEffect(() => {
+    if (params.id) {
+      fetchOpportunity();
+    }
+  }, [params.id, fetchOpportunity]);
 
   const handleUpdate = async () => {
     if (!editedOpportunity) return;

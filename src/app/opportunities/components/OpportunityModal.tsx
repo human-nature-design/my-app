@@ -149,7 +149,7 @@ export function OpportunityModal({ isOpen, onClose, onSave, opportunity, mode }:
               type="number"
               min="0"
               step="0.01"
-              value={formData["dollar amount"]}
+              value={formData["dollar amount"].toString()}
               onChange={(e) => setFormData({ ...formData, "dollar amount": parseFloat(e.target.value) || 0 })}
               placeholder="Enter dollar amount"
             />

@@ -47,6 +47,7 @@ const DefaultPageLayoutRoot = React.forwardRef<
           <img
             className="h-6 flex-none object-cover"
             src="/logo.svg"
+            alt="Logo"
           />
         }
         footer={

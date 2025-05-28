@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { DefaultPageLayout } from "@/ui/layouts/DefaultPageLayout";
 import { Button } from "@/ui/components/Button";
@@ -25,14 +25,7 @@ function CompanyDetail() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    if (params.id) {
-      fetchCompany();
-      fetchCompanyPeople();
-    }
-  }, [params.id]);
-
-  const fetchCompany = async () => {
+  const fetchCompany = useCallback(async () => {
     try {
       const response = await fetch(`/api/companies/${params.id}`);
       if (!response.ok) {
@@ -51,9 +44,9 @@ function CompanyDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id, router]);
 
-  const fetchCompanyPeople = async () => {
+  const fetchCompanyPeople = useCallback(async () => {
     try {
       const response = await fetch(`/api/companies/${params.id}/people`);
       if (!response.ok) throw new Error('Failed to fetch company people');
@@ -64,7 +57,14 @@ function CompanyDetail() {
     } finally {
       setPeopleLoading(false);
     }
-  };
+  }, [params.id]);
+
+  useEffect(() => {
+    if (params.id) {
+      fetchCompany();
+      fetchCompanyPeople();
+    }
+  }, [params.id, fetchCompany, fetchCompanyPeople]);
 
   const handleUpdate = async () => {
     if (!editedCompany) return;

@@ -59,7 +59,7 @@ export function DatePicker({
               icon="FeatherCalendar"
             >
               <TextField.Input
-                value={formatDate(value)}
+                value={formatDate(value ?? null)}
                 placeholder={placeholder}
                 readOnly
                 className="cursor-pointer"

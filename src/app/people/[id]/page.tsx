@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DefaultPageLayout } from "@/ui/layouts/DefaultPageLayout";
 import { Button } from "@/ui/components/Button";
@@ -34,17 +34,7 @@ export default function PersonDetailPage({ params }: { params: { id: string } })
     }
   };
 
-  useEffect(() => {
-    fetchPerson();
-  }, [params.id]);
-
-  useEffect(() => {
-    if (isEditing) {
-      fetchCompanies();
-    }
-  }, [isEditing]);
-
-  const fetchPerson = async () => {
+  const fetchPerson = useCallback(async () => {
     try {
       const response = await fetch(`/api/people/${params.id}`);
       if (!response.ok) throw new Error('Failed to fetch person');
@@ -56,7 +46,17 @@ export default function PersonDetailPage({ params }: { params: { id: string } })
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
+
+  useEffect(() => {
+    fetchPerson();
+  }, [fetchPerson]);
+
+  useEffect(() => {
+    if (isEditing) {
+      fetchCompanies();
+    }
+  }, [isEditing]);
 
   const fetchCompanies = async () => {
     try {
