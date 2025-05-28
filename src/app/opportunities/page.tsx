@@ -10,8 +10,8 @@ import { TextField } from "@/ui/components/TextField";
 import { Badge } from "@/ui/components/Badge";
 import { Avatar } from "@/ui/components/Avatar";
 import { Progress } from "@/ui/components/Progress";
-import { OpportunityWithId } from "@/types/opportunity";
-import { OpportunityCard, StageColumn } from "./components";
+import { OpportunityWithId, Opportunity } from "@/types/opportunity";
+import { OpportunityCard, StageColumn, OpportunityModal } from "./components";
 
 function Opportunities() {
   const router = useRouter();
@@ -19,6 +19,7 @@ function Opportunities() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [stageFilter, setStageFilter] = useState<string | undefined>(undefined);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     fetchOpportunities();
@@ -40,6 +41,24 @@ function Opportunities() {
       console.error('Error fetching opportunities:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreate = async (newOpportunity: Opportunity) => {
+    try {
+      const response = await fetch('/api/opportunities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newOpportunity),
+      });
+
+      if (!response.ok) throw new Error('Failed to create opportunity');
+      
+      await fetchOpportunities();
+      setIsCreateModalOpen(false);
+    } catch (error) {
+      console.error('Error creating opportunity:', error);
+      throw error;
     }
   };
 
@@ -195,7 +214,7 @@ function Opportunities() {
               </span>
               <Button
                 icon="FeatherPlus"
-                onClick={(event: React.MouseEvent<HTMLButtonElement>) => {}}
+                onClick={() => setIsCreateModalOpen(true)}
               >
                 New Opportunity
               </Button>
@@ -263,6 +282,13 @@ function Opportunities() {
             </div>
           </div>
         </div>
+
+        <OpportunityModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onSave={handleCreate}
+          mode="create"
+        />
       </DefaultPageLayout>
     </DndProvider>
   );
