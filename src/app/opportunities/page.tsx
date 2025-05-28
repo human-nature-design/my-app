@@ -10,6 +10,7 @@ import { TextField } from "@/ui/components/TextField";
 import { Badge } from "@/ui/components/Badge";
 import { Avatar } from "@/ui/components/Avatar";
 import { Progress } from "@/ui/components/Progress";
+import * as SubframeCore from "@subframe/core";
 import { OpportunityWithId, Opportunity } from "@/types/opportunity";
 import { OpportunityCard, StageColumn, OpportunityModal } from "./components";
 
@@ -207,20 +208,22 @@ function Opportunities() {
     <DndProvider backend={HTML5Backend}>
       <DefaultPageLayout>
         <div className="flex h-full w-full flex-col items-start">
-          <div className="flex w-full grow shrink-0 basis-0 flex-col items-start gap-8 bg-default-background px-8 py-8 overflow-auto">
+          <div className="flex w-full grow shrink-0 basis-0 flex-col items-start gap-6 mobile:gap-4 bg-default-background px-8 mobile:px-4 py-8 mobile:py-6 overflow-auto">
             <div className="flex w-full items-center justify-between">
-              <span className="text-heading-1 font-heading-1 text-default-font">
+              <span className="text-heading-1 font-heading-1 text-default-font mobile:text-heading-2 mobile:font-heading-2">
                 Opportunities
               </span>
               <Button
                 icon="FeatherPlus"
                 onClick={() => setIsCreateModalOpen(true)}
+                className="mobile:text-body mobile:font-body"
               >
-                New Opportunity
+                <span className="hidden sm:inline">New Opportunity</span>
+                <span className="inline sm:hidden">New</span>
               </Button>
             </div>
-            <div className="flex w-full flex-wrap items-start gap-4">
-              <div className="flex grow shrink-0 basis-0 flex-col items-start gap-2 rounded-md bg-neutral-50 px-4 py-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 w-full gap-4">
+              <div className="flex flex-col items-start gap-2 rounded-md bg-neutral-50 px-4 py-4">
                 <span className="text-caption-bold font-caption-bold text-subtext-color">
                   TOTAL PIPELINE
                 </span>
@@ -228,7 +231,7 @@ function Opportunities() {
                   {formatCurrency(totalPipeline)}
                 </span>
               </div>
-              <div className="flex grow shrink-0 basis-0 flex-col items-start gap-2 rounded-md bg-neutral-50 px-4 py-4">
+              <div className="flex flex-col items-start gap-2 rounded-md bg-neutral-50 px-4 py-4">
                 <span className="text-caption-bold font-caption-bold text-subtext-color">
                   AVG DEAL SIZE
                 </span>
@@ -236,7 +239,7 @@ function Opportunities() {
                   {formatCurrency(avgDealSize)}
                 </span>
               </div>
-              <div className="flex grow shrink-0 basis-0 flex-col items-start gap-2 rounded-md bg-neutral-50 px-4 py-4">
+              <div className="flex flex-col items-start gap-2 rounded-md bg-neutral-50 px-4 py-4">
                 <span className="text-caption-bold font-caption-bold text-subtext-color">
                   WIN RATE
                 </span>
@@ -245,9 +248,9 @@ function Opportunities() {
                 </span>
               </div>
             </div>
-            <div className="flex w-full items-center gap-4">
+            <div className="flex flex-col sm:flex-row w-full items-start sm:items-center gap-4">
               <TextField
-                className="h-auto w-64 flex-none"
+                className="h-auto w-full sm:w-64 flex-none"
                 variant="filled"
                 label=""
                 helpText=""
@@ -263,11 +266,14 @@ function Opportunities() {
                 variant="neutral-tertiary"
                 icon="FeatherFilter"
                 onClick={(event: React.MouseEvent<HTMLButtonElement>) => {}}
+                className="w-full sm:w-auto"
               >
                 Filter
               </Button>
             </div>
-            <div className="flex w-full grow shrink-0 basis-0 items-start gap-4 overflow-auto">
+            
+            {/* Desktop Kanban View */}
+            <div className="hidden sm:flex w-full grow shrink-0 basis-0 items-start gap-4 overflow-x-auto">
               {Object.entries(opportunitiesByStage).map(([stage, stageOpportunities]) => (
                 <StageColumn
                   key={stage}
@@ -278,6 +284,64 @@ function Opportunities() {
                   formatCurrency={formatCurrency}
                   getStageVariant={getStageVariant}
                 />
+              ))}
+            </div>
+            
+            {/* Mobile Vertical View */}
+            <div className="sm:hidden w-full space-y-6">
+              {Object.entries(opportunitiesByStage).map(([stage, stageOpportunities]) => (
+                <div key={stage} className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-heading-3 font-heading-3 text-default-font">{stage}</h3>
+                    <Badge variant={getStageVariant(stage)}>
+                      {stageOpportunities.length}
+                    </Badge>
+                  </div>
+                  <div className="space-y-3">
+                    {stageOpportunities.length === 0 ? (
+                      <div className="text-body font-body text-subtext-color text-center py-4 bg-neutral-50 rounded-md border border-neutral-border">
+                        No opportunities
+                      </div>
+                    ) : (
+                      stageOpportunities.map((opportunity) => (
+                        <div 
+                          key={opportunity.id}
+                          onClick={() => handleOpportunityClick(opportunity)}
+                          className="bg-neutral-50 border border-neutral-border rounded-md p-4 space-y-3 cursor-pointer hover:border-neutral-300 transition-colors"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4 className="text-body-bold font-body-bold text-default-font">
+                                {opportunity.name}
+                              </h4>
+                              {opportunity.Companies?.name && (
+                                <p className="text-caption font-caption text-subtext-color mt-1">
+                                  {opportunity.Companies.name}
+                                </p>
+                              )}
+                            </div>
+                            <span className="text-body-bold font-body-bold text-default-font">
+                              {formatCurrency(opportunity["dollar amount"] || 0)}
+                            </span>
+                          </div>
+                          
+                          {opportunity["close date"] && (
+                            <div className="flex items-center gap-2 text-caption font-caption text-subtext-color">
+                              <SubframeCore.Icon name="FeatherCalendar" className="w-3 h-3" />
+                              <span>
+                                {new Date(opportunity["close date"]).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric'
+                                })}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               ))}
             </div>
           </div>
