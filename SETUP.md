@@ -51,6 +51,22 @@ CREATE TABLE People (
 );
 ```
 
+#### Opportunities table
+```sql
+CREATE TABLE Opportunities (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  value DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  company VARCHAR(255) NOT NULL,
+  close_date DATE NOT NULL,
+  progress INTEGER NOT NULL DEFAULT 0 CHECK (progress >= 0 AND progress <= 100),
+  stage VARCHAR(50) NOT NULL DEFAULT 'Qualified' CHECK (stage IN ('Qualified', 'Proposal', 'Negotiation', 'Closed Won')),
+  company_avatar VARCHAR(255),
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
 ### Step 4: Restart the development server
 
 After setting up the environment variables, restart your development server:
