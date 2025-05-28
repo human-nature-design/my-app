@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DefaultPageLayout } from "@/ui/layouts/DefaultPageLayout";
 import { Button } from "@/ui/components/Button";
 import { TextField } from "@/ui/components/TextField";
@@ -9,6 +11,7 @@ import { Badge } from "@/ui/components/Badge";
 import { Avatar } from "@/ui/components/Avatar";
 import { Progress } from "@/ui/components/Progress";
 import { OpportunityWithId } from "@/types/opportunity";
+import { OpportunityCard, StageColumn } from "./components";
 
 function Opportunities() {
   const router = useRouter();
@@ -40,8 +43,85 @@ function Opportunities() {
     }
   };
 
+  const updateOpportunityStatus = async (opportunityId: string, newStatus: string) => {
+    try {
+      const response = await fetch(`/api/opportunities/${opportunityId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update opportunity status: ${response.status} ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating opportunity status:', error);
+      throw error;
+    }
+  };
+
   const handleOpportunityClick = (opportunity: OpportunityWithId) => {
     router.push(`/opportunities/${opportunity.id}`);
+  };
+
+  const moveOpportunity = async (opportunityId: number, newStatus: string, targetId?: number, position?: 'above' | 'below') => {
+    // Find the opportunity being moved
+    const opportunity = opportunities.find(opp => opp.id === opportunityId);
+    if (!opportunity || opportunity.status === newStatus) {
+      return;
+    }
+
+    console.log(`Moving opportunity ${opportunityId} to ${newStatus}${targetId ? ` ${position || 'near'} ${targetId}` : ''}`);
+
+    // Optimistically update the UI
+    let updatedOpportunities = [...opportunities];
+    
+    // Remove the opportunity from its current position
+    updatedOpportunities = updatedOpportunities.filter(opp => opp.id !== opportunityId);
+    
+    // Update the status
+    const updatedOpportunity = { ...opportunity, status: newStatus };
+    
+    if (targetId && position) {
+      // Insert relative to the target opportunity
+      const targetIndex = updatedOpportunities.findIndex(opp => opp.id === targetId);
+      if (targetIndex !== -1) {
+        const insertIndex = position === 'above' ? targetIndex : targetIndex + 1;
+        updatedOpportunities.splice(insertIndex, 0, updatedOpportunity);
+      } else {
+        // Target not found, add to end
+        updatedOpportunities.push(updatedOpportunity);
+      }
+    } else if (targetId) {
+      // Legacy: Insert near the target opportunity (default to above)
+      const targetIndex = updatedOpportunities.findIndex(opp => opp.id === targetId);
+      if (targetIndex !== -1) {
+        updatedOpportunities.splice(targetIndex, 0, updatedOpportunity);
+      } else {
+        // Target not found, add to end of status group
+        updatedOpportunities.push(updatedOpportunity);
+      }
+    } else {
+      // Add to end of the opportunities
+      updatedOpportunities.push(updatedOpportunity);
+    }
+    
+    setOpportunities(updatedOpportunities);
+
+    try {
+      // Update the backend
+      await updateOpportunityStatus(opportunityId.toString(), newStatus);
+      console.log(`Successfully moved ${opportunity.name} to ${newStatus}`);
+    } catch (error) {
+      // Revert the optimistic update on error
+      console.error('Failed to update opportunity status:', error);
+      setOpportunities(opportunities);
+      alert('Failed to update opportunity status. Please try again.');
+    }
   };
 
   // Filter opportunities based on search term and stage
@@ -86,19 +166,6 @@ function Opportunities() {
     }
   };
 
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) {
-      return 'No date set';
-    }
-    
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      return 'Invalid date';
-    }
-    
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
   const getStageVariant = (status: string): "success" | "warning" | "neutral" => {
     switch (status) {
       case 'Closed Won': return 'success';
@@ -106,56 +173,6 @@ function Opportunities() {
       default: return 'neutral';
     }
   };
-
-  const renderOpportunityCard = (opportunity: OpportunityWithId) => {
-    const companyName = opportunity.Companies?.name || `Company ${opportunity.companyId}`;
-    
-    return (
-      <div 
-        key={opportunity.id} 
-        className="flex w-full flex-col items-start gap-2 rounded-md border border-solid border-neutral-border bg-default-background px-4 py-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-        onClick={() => handleOpportunityClick(opportunity)}
-      >
-        <div className="flex w-full items-center justify-between">
-          <span className="text-body-bold font-body-bold text-default-font">
-            {opportunity.name}
-          </span>
-          <Badge variant="success">{formatCurrency(opportunity["dollar amount"])}</Badge>
-        </div>
-        <div className="flex w-full items-center gap-2">
-          <Avatar
-            size="small"
-            image={opportunity.company_avatar}
-          >
-            {companyName.charAt(0).toUpperCase()}
-          </Avatar>
-          <span className="text-body font-body text-subtext-color">
-            {companyName}
-          </span>
-        </div>
-        <div className="flex w-full items-center justify-between">
-          <span className="text-caption font-caption text-subtext-color">
-            {opportunity.status === 'Closed Won' ? 'Closed:' : 'Close:'} {formatDate(opportunity["close date"])}
-          </span>
-          <Progress value={opportunity.progress || 0} />
-        </div>
-      </div>
-    );
-  };
-
-  const renderStageColumn = (stage: string, opportunities: OpportunityWithId[]) => (
-    <div key={stage} className="flex w-64 flex-none flex-col items-start gap-4">
-      <div className="flex w-full items-center justify-between rounded-md bg-neutral-50 px-4 py-2">
-        <span className="text-body-bold font-body-bold text-default-font">
-          {stage}
-        </span>
-        <Badge variant={getStageVariant(stage)}>{opportunities.length}</Badge>
-      </div>
-      <div className="flex w-full flex-col items-start gap-4">
-        {opportunities.map(renderOpportunityCard)}
-      </div>
-    </div>
-  );
 
   if (loading) {
     return (
@@ -168,76 +185,86 @@ function Opportunities() {
   }
 
   return (
-    <DefaultPageLayout>
-      <div className="flex h-full w-full flex-col items-start">
-        <div className="flex w-full grow shrink-0 basis-0 flex-col items-start gap-8 bg-default-background px-8 py-8 overflow-auto">
-          <div className="flex w-full items-center justify-between">
-            <span className="text-heading-1 font-heading-1 text-default-font">
-              Opportunities
-            </span>
-            <Button
-              icon="FeatherPlus"
-              onClick={(event: React.MouseEvent<HTMLButtonElement>) => {}}
-            >
-              New Opportunity
-            </Button>
-          </div>
-          <div className="flex w-full flex-wrap items-start gap-4">
-            <div className="flex grow shrink-0 basis-0 flex-col items-start gap-2 rounded-md bg-neutral-50 px-4 py-4">
-              <span className="text-caption-bold font-caption-bold text-subtext-color">
-                TOTAL PIPELINE
+    <DndProvider backend={HTML5Backend}>
+      <DefaultPageLayout>
+        <div className="flex h-full w-full flex-col items-start">
+          <div className="flex w-full grow shrink-0 basis-0 flex-col items-start gap-8 bg-default-background px-8 py-8 overflow-auto">
+            <div className="flex w-full items-center justify-between">
+              <span className="text-heading-1 font-heading-1 text-default-font">
+                Opportunities
               </span>
-              <span className="text-heading-2 font-heading-2 text-default-font">
-                {formatCurrency(totalPipeline)}
-              </span>
+              <Button
+                icon="FeatherPlus"
+                onClick={(event: React.MouseEvent<HTMLButtonElement>) => {}}
+              >
+                New Opportunity
+              </Button>
             </div>
-            <div className="flex grow shrink-0 basis-0 flex-col items-start gap-2 rounded-md bg-neutral-50 px-4 py-4">
-              <span className="text-caption-bold font-caption-bold text-subtext-color">
-                AVG DEAL SIZE
-              </span>
-              <span className="text-heading-2 font-heading-2 text-default-font">
-                {formatCurrency(avgDealSize)}
-              </span>
+            <div className="flex w-full flex-wrap items-start gap-4">
+              <div className="flex grow shrink-0 basis-0 flex-col items-start gap-2 rounded-md bg-neutral-50 px-4 py-4">
+                <span className="text-caption-bold font-caption-bold text-subtext-color">
+                  TOTAL PIPELINE
+                </span>
+                <span className="text-heading-2 font-heading-2 text-default-font">
+                  {formatCurrency(totalPipeline)}
+                </span>
+              </div>
+              <div className="flex grow shrink-0 basis-0 flex-col items-start gap-2 rounded-md bg-neutral-50 px-4 py-4">
+                <span className="text-caption-bold font-caption-bold text-subtext-color">
+                  AVG DEAL SIZE
+                </span>
+                <span className="text-heading-2 font-heading-2 text-default-font">
+                  {formatCurrency(avgDealSize)}
+                </span>
+              </div>
+              <div className="flex grow shrink-0 basis-0 flex-col items-start gap-2 rounded-md bg-neutral-50 px-4 py-4">
+                <span className="text-caption-bold font-caption-bold text-subtext-color">
+                  WIN RATE
+                </span>
+                <span className="text-heading-2 font-heading-2 text-default-font">
+                  {winRate.toFixed(0)}%
+                </span>
+              </div>
             </div>
-            <div className="flex grow shrink-0 basis-0 flex-col items-start gap-2 rounded-md bg-neutral-50 px-4 py-4">
-              <span className="text-caption-bold font-caption-bold text-subtext-color">
-                WIN RATE
-              </span>
-              <span className="text-heading-2 font-heading-2 text-default-font">
-                {winRate.toFixed(0)}%
-              </span>
+            <div className="flex w-full items-center gap-4">
+              <TextField
+                className="h-auto w-64 flex-none"
+                variant="filled"
+                label=""
+                helpText=""
+                icon="FeatherSearch"
+              >
+                <TextField.Input
+                  placeholder="Search opportunities..."
+                  value={searchTerm}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(event.target.value)}
+                />
+              </TextField>
+              <Button
+                variant="neutral-tertiary"
+                icon="FeatherFilter"
+                onClick={(event: React.MouseEvent<HTMLButtonElement>) => {}}
+              >
+                Filter
+              </Button>
             </div>
-          </div>
-          <div className="flex w-full items-center gap-4">
-            <TextField
-              className="h-auto w-64 flex-none"
-              variant="filled"
-              label=""
-              helpText=""
-              icon="FeatherSearch"
-            >
-              <TextField.Input
-                placeholder="Search opportunities..."
-                value={searchTerm}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(event.target.value)}
-              />
-            </TextField>
-            <Button
-              variant="neutral-tertiary"
-              icon="FeatherFilter"
-              onClick={(event: React.MouseEvent<HTMLButtonElement>) => {}}
-            >
-              Filter
-            </Button>
-          </div>
-          <div className="flex w-full grow shrink-0 basis-0 items-start gap-4 overflow-auto">
-            {Object.entries(opportunitiesByStage).map(([stage, stageOpportunities]) => 
-              renderStageColumn(stage, stageOpportunities)
-            )}
+            <div className="flex w-full grow shrink-0 basis-0 items-start gap-4 overflow-auto">
+              {Object.entries(opportunitiesByStage).map(([stage, stageOpportunities]) => (
+                <StageColumn
+                  key={stage}
+                  stage={stage}
+                  opportunities={stageOpportunities}
+                  onMoveOpportunity={moveOpportunity}
+                  onOpportunityClick={handleOpportunityClick}
+                  formatCurrency={formatCurrency}
+                  getStageVariant={getStageVariant}
+                />
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-    </DefaultPageLayout>
+      </DefaultPageLayout>
+    </DndProvider>
   );
 }
 
