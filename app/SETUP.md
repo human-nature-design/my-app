@@ -6,7 +6,7 @@ To fix the "add company doesn't add to database" issue, you need to set up your 
 
 ### Step 1: Create .env.local file
 
-Create a file named `.env.local` in the `my-app` directory with the following content:
+Create a file named `.env.local` in the `app` directory with the following content:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url

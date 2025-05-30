@@ -110,7 +110,7 @@ RESTful API endpoints following standard conventions:
 1. **Clone the repository**
    ```bash
    git clone https://github.com/yourusername/crm-pro.git
-   cd crm-pro/my-app
+   cd crm-pro/app
    ```
 
 2. **Install dependencies**
@@ -120,7 +120,7 @@ RESTful API endpoints following standard conventions:
 
 3. **Set up environment variables**
    
-   Create a `.env.local` file in the `my-app` directory:
+   Create a `.env.local` file in the `app` directory:
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
@@ -187,7 +187,7 @@ RESTful API endpoints following standard conventions:
 ## 📁 Project Structure
 
 ```
-my-app/
+app/
 ├── public/                 # Static assets
 ├── src/
 │   ├── app/
