@@ -5,6 +5,10 @@
 from flask import Flask, render_template_string
 import os
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Create a Flask application
 # Think of this as creating your website
